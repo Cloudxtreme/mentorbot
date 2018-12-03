@@ -3,6 +3,7 @@
 using System;
 using System.IO;
 
+using MentorBot.Functions.Abstract.Connectors;
 using MentorBot.Functions.Abstract.Processor;
 using MentorBot.Functions.Abstract.Services;
 using MentorBot.Functions.Connectors;
@@ -46,10 +47,12 @@ namespace MentorBot.Functions.App
             var services = new ServiceCollection();
 
             services.AddTransient<IAsyncResponder, HangoutsChatConnector>();
+            services.AddTransient<IGoogleCalendarConnector, GoogleCalendarConnector>();
             services.AddTransient<IHangoutsChatService, HangoutsChatService>();
             services.AddTransient<ICognitiveService, CognitiveService>();
             services.AddTransient<ICommandProcessor, LocalTimeProcessor>();
             services.AddTransient<ICommandProcessor, RepeatProcessor>();
+            services.AddTransient<ICommandProcessor, CalendarProcessor>();
             services.AddTransient<IStringLocalizer, StringLocalizer>();
             services.AddSingleton(new GoogleCloudOptions(config));
             services.AddSingleton<IDocumentClientService>(

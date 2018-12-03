@@ -8,6 +8,9 @@ namespace MentorBot.Functions
     [ExcludeFromCodeCoverage]
     public static class Constants
     {
+        /// <summary>The name of the google service account file.</summary>
+        public const string GoogleServiceAccountFileName = "certs/google-service-account.json";
+
         /// <summary>Gets the swagger json endpoint.</summary>
         public static string SwaggerJsonEndpoint => "/swagger/v1/swagger.json";
     }

@@ -2,6 +2,7 @@
 
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -36,6 +37,7 @@ namespace MentorBot.Functions
         [FunctionName("chatEvent")]
         public static async Task<IActionResult> RunAsync(
             [HttpTrigger(AuthorizationLevel.Anonymous, nameof(HttpMethods.Post), Route = null)] HttpRequestMessage req,
+            [Blob(Constants.GoogleServiceAccountFileName, FileAccess.Read)] Stream googleAccountCredentials,
             ILogger log)
         {
             Debug.Write(req);
@@ -45,6 +47,8 @@ namespace MentorBot.Functions
             var client = ServiceLocator.Get<IDocumentClientService>();
             var hangoutsChatService = ServiceLocator.Get<IHangoutsChatService>();
             var options = ServiceLocator.Get<GoogleCloudOptions>();
+
+            options.SetGoogleCreadentialsStream(googleAccountCredentials);
 
             var hangoutChatEvent = await content
                 .ReadAsAsync<ChatEvent>()
@@ -56,17 +60,28 @@ namespace MentorBot.Functions
                 return new UnauthorizedResult();
             }
 
+            if (log.IsEnabled(LogLevel.Debug))
+            {
+                var contentAsString = await content.ReadAsStringAsync();
+                log.LogDebug(contentAsString);
+            }
+
             var result = await hangoutsChatService
                 .BasicAsync(hangoutChatEvent)
                 .ConfigureAwait(false);
 
-            var document = await client
-                .GetAsync<Message>("mentorbot", "messages")
-                .ConfigureAwait(false);
+            if (client.IsConnected)
+            {
+                log.LogInformation("Add message to document database mentorbot.");
 
-            await document
-                .AddAsync(result)
-                .ConfigureAwait(false);
+                var document = await client
+                    .GetAsync<Message>("mentorbot", "messages")
+                    .ConfigureAwait(false);
+
+                await document
+                    .AddAsync(result)
+                    .ConfigureAwait(false);
+            }
 
             log.LogInformation(result.Output?.Text);
 
